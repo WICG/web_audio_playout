@@ -3,13 +3,13 @@
 
 <head>
   <meta charset="utf-8">
-  <title>AudioContext Glitch & delay metrics API</title>
+  <title>Playout Statistics API for WebAudio</title>
   <script src="https://www.w3.org/Tools/respec/respec-w3c" class="remove"></script>
   <script class='remove'>
     "use strict";
     // See https://github.com/w3c/respec/wiki/ for how to configure ReSpec
     var respecConfig = {
-      // "githubAPI": "WICG/audio_context_playout_stats",
+      "githubAPI": "WICG/audio_context_playout_stats",
       "editors": [{
         name: "Palak Agarwal",
         email: "palak8669@gmail.com",
@@ -68,8 +68,8 @@
       <section>
         <h2><dfn>playoutStats</dfn> attribute</h2>
         <p>
-          The {{AudioContext/AudioPlayoutStats}} under AudioContext is a dedicated object for statistics reporting:
-          Similar to <a href="https://w3c.github.io/webrtc-stats/#dom-rtcaudioplayoutstats">RTCAudioPlayoutStats</a>
+          The {{AudioContext/AudioPlayoutStats}} under AudioContext is a dedicated object for statistics reporting;
+          Similar to <a href="https://w3c.github.io/webrtc-stats/#dom-rtcaudioplayoutstats">RTCAudioPlayoutStats</a>,
            but it is for the playout path via AudioDestinationNode and the associated output device.
           This will allow us to measure glitches occurring due to underperforming AudioWorklets as well as glitches and
           delay occurring in the playout path between the AudioContext and the output device.</p>

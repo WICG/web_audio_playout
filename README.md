@@ -1,6 +1,6 @@
-# AudioContext Glitch & delay metrics API explainer
+# Playout Statistics API for WebAudio explainer
 
-This is the repository for AudioContext Glitch & delay metrics API. You're welcome to
+This is the repository for Playout Statistics API for WebAudio. You're welcome to
 [contribute](CONTRIBUTING.md)!
 
 ## Authors:
@@ -108,8 +108,11 @@ The stats are kept in sync with each other in accordance with run-to-completion 
 
 ### Alternative delay definition
 
-Alternatively, we can just define a totalPlayoutDelay similar to https://w3c.github.io/webrtc-stats/#dom-rtcaudioplayoutstats-totalplayoutdelay. 
-In this case we also need to add a total frames count attribute: When audio frames are pulled by the playout device, this counter is incremented with the number of frames emitted for playout.
+Alternatively, we can just define a totalPlayoutDelay similar to https://w3c.github.io/webrtc-stats/#dom-rtcaudioplayoutstats-totalplayoutdelay.
+
+In this case we also need to add a total frames count attribute: When audio frames are pulled by the playout device, this counter is incremented with the number of frames emitted for playout. Note that we won't be able to calculate minimum/maximum latency with this approach.
+
 ```js
+readonly attribute double totalPlayoutDelay;
 readonly attribute unsigned long long totalFramesCount; 
 ```
