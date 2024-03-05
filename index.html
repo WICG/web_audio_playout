@@ -19,6 +19,7 @@
         // Add additional editors here.
         // https://github.com/w3c/respec/wiki/editors
       ],
+      "group": "media",
       "shortName": "audio_context_playout_stats",
       "specStatus": "CG-DRAFT",
       "wg": "WICG",
@@ -82,12 +83,12 @@
     <pre class="idl">
     [Exposed=Window, SecureContext]
     interface AudioPlayoutStats {
-      readonly attribute DOMHighResTimeStamp fallbackFramesDuration;
+      readonly attribute {{DOMHighResTimeStamp}} fallbackFramesDuration;
       readonly attribute unsigned long fallbackFramesEvents;
-      readonly attribute DOMHighResTimeStamp totalFramesDuration;
-      readonly attribute DOMHighResTimeStamp averageLatency;
-      readonly attribute DOMHighResTimeStamp minimumLatency;
-      readonly attribute DOMHighResTimeStamp maximumLatency;
+      readonly attribute {{DOMHighResTimeStamp}} totalFramesDuration;
+      readonly attribute {{DOMHighResTimeStamp}} averageLatency;
+      readonly attribute {{DOMHighResTimeStamp}} minimumLatency;
+      readonly attribute {{DOMHighResTimeStamp}} maximumLatency;
       undefined resetLatency();
       [Default] object toJSON();
     };

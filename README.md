@@ -46,9 +46,9 @@ frames are always silence. This includes underrun situations that happen for rea
 
 [Exposed=Window, SecureContext]
 interface AudioPlayoutStats {
-readonly attribute DOMHighResTimeStamp fallback[FramesDuration](https://w3c.github.io/webrtc-stats/#dom-rtcaudioplayoutstats-synthesizedsamplesduration)
-readonly attribute unsigned long fallback[FramesEvents](https://w3c.github.io/webrtc-stats/#dom-rtcaudioplayoutstats-synthesizedsamplesevents)
-readonly attribute DOMHighResTimeStamp [totalFramesDuration](https://w3c.github.io/webrtc-stats/#dom-rtcaudioplayoutstats-totalsamplesduration) 
+readonly attribute DOMHighResTimeStamp fallbackFramesDuration;
+readonly attribute unsigned long fallbackFramesEvents;
+readonly attribute DOMHighResTimeStamp totalFramesDuration;
 readonly attribute DOMHighResTimeStamp averageLatency;
 readonly attribute DOMHighResTimeStamp minimumLatency;
 readonly attribute DOMHighResTimeStamp maximumLatency;
@@ -90,7 +90,7 @@ let playoutDelay = audioContext.playoutStats.averageLatency / 1000;
 
 ## Detailed design discussion
 
-The AudioPlayoutStats under AudioContext will be a dedicated object for statistics reporting; Similar to RTCAudioPlayoutStats but it is for the playout path via AudioDestinationNode and the associated output device. This will allow us to measure glitches occurring due to underperforming AudioWorklets as well as glitches and delay occurring in the playout path between the AudioContext and the output device.
+The AudioPlayoutStats under AudioContext will be a dedicated object for statistics reporting; Similar to [RTCAudioPlayoutStats](https://w3c.github.io/webrtc-stats/#dom-rtcaudioplayoutstats) but it is for the playout path via AudioDestinationNode and the associated output device. This will allow us to measure glitches occurring due to underperforming AudioWorklets as well as glitches and delay occurring in the playout path between the AudioContext and the output device.
 
 The stats are kept in sync with each other in accordance with run-to-completion semantics. If one of the stats has been observed, we consider all of the other stats to have been observed simultaneously (i.e. they won't change). 
 
