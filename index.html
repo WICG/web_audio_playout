@@ -6,30 +6,31 @@
   <title>AudioContext Glitch & delay metrics API</title>
   <script src="https://www.w3.org/Tools/respec/respec-w3c" class="remove"></script>
   <script class='remove'>
-  "use strict";
-  // See https://github.com/w3c/respec/wiki/ for how to configure ReSpec
-  var respecConfig = {
-    "githubAPI": "WICG/audio_context_playout_stats",
-    "editors": [{
+    "use strict";
+    // See https://github.com/w3c/respec/wiki/ for how to configure ReSpec
+    var respecConfig = {
+      "githubAPI": "WICG/audio_context_playout_stats",
+      "editors": [{
         name: "Palak Agarwal",
-        email: "agpalak@chromium.org",
+        email: "palak8669@gmail.com",
         company: "Google",
         companyURL: "google.com",
       },
-      // Add additional editors here.
-      // https://github.com/w3c/respec/wiki/editors
-    ],
-    "shortName": "audio_context_playout_stats",
-    "specStatus": "CG-DRAFT",
-    "wg": "WICG",
-  };
+        // Add additional editors here.
+        // https://github.com/w3c/respec/wiki/editors
+      ],
+      "shortName": "audio_context_playout_stats",
+      "specStatus": "CG-DRAFT",
+      "wg": "WICG",
+    };
   </script>
 </head>
 
 <body>
   <section id="abstract">
     <p>
-      This specification does neat stuff.
+      When playing audio through WebAudio, we want to be able to measure the delay of that audio and the glitchiness of
+      the audio. This document contains a proposal of an API that would allow WebAudio users to do this.
     </p>
   </section>
   <section id="sotd">
@@ -40,28 +41,148 @@
   <section id="introduction">
     <h2>Introduction</h2>
     <p>
-      See <a href="https://github.com/w3c/respec/wiki/User's-Guide">ReSpec's
-      user guide</a> for how to get started!
+      There is currently no way to detect whether WebAudio playout has glitches (gaps in the played audio, which
+      typically happens due to underperformance in the audio pipeline). There is an existing way to measure the
+      instantaneous playout latency using <a
+        href="https://webaudio.github.io/web-audio-api/#dom-audiocontext-outputlatency">AudioContext.outputLatency</a>,
+      but no simple way to measure
+      average/minimum/maximum latency over time.
+    </p>
+    <p>
+      Glitches and high latency are bad for the user experience, so if any of these occur it can be useful for the
+      application to be able to detect this and possibly take some action to improve the playout.
     </p>
   </section>
-  <section data-dfn-for="Foo">
-    <h2>Start your spec!</h2>
+  <section data-dfn-for="AudioContext">
+    <h2>Extension of the <a href="https://webaudio.github.io/web-audio-api/#AudioContext"><dfn>AudioContext</dfn></a>
+      interface
+    </h2>
     <pre class="idl">
-    interface Foo {
-      attribute Bar bar;
-      void doTheFoo();
+    partial interface AudioContext {
+      [SameObject] readonly attribute AudioPlayoutStats playoutStats;
     };
     </pre>
     <p>
-      See <a href="https://github.com/w3c/respec/wiki/WebIDL-Guide">ReSpec's
-      WebIDL guide</a> for how to write [[!WebIDL-2]] interfaces!
+    <section>
+      <h2>Attributes</h2>
+      <section>
+        <h2><dfn>playoutStats</dfn> attribute</h2>
+        <p>
+          The {{AudioContext/AudioPlayoutStats}} under AudioContext is a dedicated object for statistics reporting:
+          Similar to <a href="https://w3c.github.io/webrtc-stats/#dom-rtcaudioplayoutstats">RTCAudioPlayoutStats</a>
+           but it is for the playout path via AudioDestinationNode and the associated output device.
+          This will allow us to measure glitches occurring due to underperforming AudioWorklets as well as glitches and
+          delay occurring in the playout path between the AudioContext and the output device.</p>
+      </section>
+    </section>
     </p>
-    <p>
-      The <dfn>doTheFoo</dfn> method.
-    </p>
-    <p>
-      The <dfn>bar</dfn> attribute.
-    </p>
+  </section>
+  <section data-dfn-for="AudioPlayoutStats">
+    <h2><dfn>AudioPlayoutStats</dfn> interface</h2>
+    <pre class="idl">
+    [Exposed=Window, SecureContext]
+    interface AudioPlayoutStats {
+      readonly attribute DOMHighResTimeStamp fallbackFramesDuration;
+      readonly attribute unsigned long fallbackFramesEvents;
+      readonly attribute DOMHighResTimeStamp totalFramesDuration;
+      readonly attribute DOMHighResTimeStamp averageLatency;
+      readonly attribute DOMHighResTimeStamp minimumLatency;
+      readonly attribute DOMHighResTimeStamp maximumLatency;
+      undefined resetLatency();
+      [Default] object toJSON();
+    };
+    </pre>
+    <section>
+      <h2>Attributes</h2>
+      <section>
+        <h2><dfn>fallbackFramesDuration</dfn> attribute</h2>
+        <p>This value is measured in milliseconds and is incremented
+          each time a fallback frame is played by the output device at the end of the playout path. This metric can be
+          used together with {{AudioPlayoutStats/totalFramesDuration}} to calculate the percentage of played out media
+          that was not provided by the AudioContext.
+        </p>
+      </section>
+      <section>
+        <h2><dfn>fallbackFramesEvents</dfn> attribute</h2>
+        <p>This measures the number of synthesized fallback frames events.
+          This counter increases every time a fallback frame is played after a non-fallback frame. That is, multiple
+          consecutive fallback frames will increase {{AudioPlayoutStats/fallbackFramesDuration}} multiple times but is a
+          single fallback
+          frames event.
+        </p>
+      </section>
+      <section>
+        <h2><dfn>totalFramesDuration</dfn> attribute</h2>
+        <p>This attribute is the total duration, in milliseconds, of all audio
+          frames that have been played by the audio device. Includes both fallback and non-fallback frames.</p>
+      </section>
+      <section>
+        <h2><dfn>averageLatency</dfn> attribute</h2>
+        <p>This is the average latency for the frames played since the
+          last call to {{AudioPlayoutStats/resetLatency()}}, or since the creation of the AudioContext if
+          {{AudioPlayoutStats/resetLatency()}} has
+          not been called.</p>
+      </section>
+      <section>
+        <h2><dfn>minimumLatency</dfn> attribute</h2>
+        <p>This measures the minimum latency for the frames played since the
+          last call to {{AudioPlayoutStats/resetLatency()}}, or since the creation of the AudioContext if
+          {{AudioPlayoutStats/resetLatency()}} has not been called. </p>
+      </section>
+      <section>
+        <h2><dfn>maximumLatency</dfn> attribute</h2>
+        <p>This measures the maximum latency for the frames played since the
+          last call to {{AudioPlayoutStats/resetLatency()}}, or since the creation of the AudioContext if
+          {{AudioPlayoutStats/resetLatency()}} has not been called.
+        </p>
+      </section>
+    </section>
+    <section>
+      <h2>Methods</h2>
+      <section>
+        <h2><dfn>resetLatency</dfn> method</h2>
+        <p>This method resets the latency counters. Note that it does not remove
+          latency information that has accrued but not yet been exposed through the API.</p>
+      </section>
+    </section>
+  </section>
+  <section id="usage">
+    <h2>Usage Example</h2>
+    This is an example of how the API can be used to calculate the following stats over a time interval:
+    <ul>
+      <li>
+        Fraction of fallback frames
+      </li>
+      <li>
+        Frequency of fallback frames events (glitches)
+      </li>
+      <li>
+        Average playout delay
+      </li>
+    </ul>
+  
+    <pre class="js">
+var oldTotalFramesDuration = audioContext.playoutStats.totalFramesDuration;
+var oldFallbackFramesDuration = audioContext.playoutStats.fallbackFramesDuration;
+var oldFallbackFramesEvents = audioContext.playoutStats.fallbackFramesEvents;
+audioContext.playoutStats.resetLatency();
+
+// Wait while playing audio
+...
+
+// the number of seconds that were covered by the frames played by the output device between the two executions.
+let deltaTotalFramesDuration = (audioContext.playoutStats.totalFramesDuration - oldTotalFramesDuration) / 1000;
+let deltaFallbackFramesDuration = (audioContext.playoutStats.fallbackFramesDuration - oldFallbackFramesDuration) / 1000;
+let deltaFallbackFramesEvents = audioContext.playoutStats.fallbackFramesEvents - oldFallbackFramesEvents;
+
+// fallback frames fraction stat over the last deltaTotalFramesDuration seconds
+let fallbackFramesFraction = deltaFallbackFramesDuration / deltaTotalFramesDuration;
+// fallback event frequency stat over the last deltaTotalFramesDuration seconds
+let fallbackEventFrequency = deltaFallbackFramesEvents / deltaTotalFramesDuration;
+// Average playout delay stat during the last deltaTotalFramesDuration seconds
+let playoutDelay = audioContext.playoutStats.averageLatency / 1000;
+
+      </pre>
   </section>
 </body>
 
