@@ -90,13 +90,13 @@ let playoutDelay = audioContext.playoutStats.averageLatency / 1000;
 
 ## Detailed design discussion
 
-The AudioPlayoutStats under AudioContext is a dedicated object for statistics reporting: Similar to RTCAudioPlayoutStats but it is for the playout path via AudioDestinationNode and the associated output device. This will allow us to measure glitches occurring due to underperforming AudioWorklets as well as glitches and delay occurring in the playout path between the AudioContext and the output device.
+The AudioPlayoutStats under AudioContext will be a dedicated object for statistics reporting; Similar to RTCAudioPlayoutStats but it is for the playout path via AudioDestinationNode and the associated output device. This will allow us to measure glitches occurring due to underperforming AudioWorklets as well as glitches and delay occurring in the playout path between the AudioContext and the output device.
 
 The stats are kept in sync with each other in accordance with run-to-completion semantics. If one of the stats has been observed, we consider all of the other stats to have been observed simultaneously (i.e. they won't change). 
 
-- fallbackFrameDuration: is measured in milliseconds and is incremented each time a fallback frame is played by the output device at the end of the playout path. This metric can be used together with totalFramesDuration to calculate the percentage of played out media that was not provided by the AudioContext.
-- fallbackFramesEvents is the number of synthesized fallback frames events. This counter increases every time a fallback frame is played after a non-fallback frame. That is, multiple consecutive fallback frames will increase fallbackFramesDuration multiple times but is a single fallback frames event.
-- totalFramesDuration is the total duration, in milliseconds, of all audio frames that have been played by the audio device. Includes both fallback and non-fallback frames.
+- fallbackFrameDuration: Measured in milliseconds and is incremented each time a fallback frame is played by the output device at the end of the playout path. This metric can be used together with totalFramesDuration to calculate the percentage of played out media that was not provided by the AudioContext.
+- fallbackFramesEvents: Number of synthesized fallback frames events. This counter increases every time a fallback frame is played after a non-fallback frame. That is, multiple consecutive fallback frames will increase fallbackFramesDuration multiple times but is a single fallback frames event.
+- totalFramesDuration: Total duration, in milliseconds, of all audio frames that have been played by the audio device. Includes both fallback and non-fallback frames.
 - The following latency-related properties and methods are similar to the MediaStreamTrackAudioStats interface.
     - averageLatency: The average latency for the frames played since the last call to resetLatency(), or since the creation of the AudioContext if resetLatency() has not been called.
     - minimumLatency: The minimum latency for the frames played since the last call to resetLatency(), or since the creation of the AudioContext if resetLatency() has not been called.
