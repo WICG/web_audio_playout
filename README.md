@@ -103,6 +103,26 @@ The stats are kept in sync with each other in accordance with run-to-completion 
     - maximumLatency: The maximum latency for the frames played since the last call to resetLatency(), or since the creation of the AudioContext if resetLatency() has not been called.
     - resetLatency(): Resets the latency counters. Note that it does not remove latency information that has accrued but not yet been exposed through the API.
 
+## Security and Privacy Considerations
+
+A more detailed discussion about security and privacy can be found in the [Security and Privacy self review](https://docs.google.com/document/d/1wGv_mr7Lgg2w-6PuKDrcScoa8IvYAOW3PMTFW85O3Gw/edit#heading=h.d6giaiodx3q3).
+
+### Cross-site covert channeling
+
+In Chromium, Safari and Firefox it is already possible to intentionally communicate between different origins using audio glitches ([see explanation here](https://github.com/w3ctag/design-reviews/issues/939#issuecomment-2022954199)). This side channel has a very high latency, is audible to the user, and degrades system performance, so it is unlikely to be useful to attackers. 
+
+It would be good if the introduction of the Playout Statistics API for WebAudio does not reduce the latency of this side channel. We could do this by limiting the rate at which the information provided by the API is updated, similar to the [Rate limitation used for the ComputePressure API](https://www.w3.org/TR/compute-pressure/#rate-limiting-change-notifications). This would increase the latency of any attempts to communicate using the glitch information, ensuring that the audio glitch-based side channel is not made more useful.
+
+## Comparison to [WebAudio RenderCapacity API](https://github.com/w3ctag/design-reviews/issues/843)
+
+### Usage
+The proposed WebAudio RenderCapacity API gives information about how much load the audio rendering thread is under, and the ratio of glitches that are occurring if that load exceeds 100%. This is intended to allow applications to react when the rendering thread is approaching maximum load, in which case the application can proactively reduce the complexity of the audio computations to avoid audio glitches occurring.
+
+The Playout Statistics API for WebAudio that we are proposing in this explainer gives audio glitch and delay information about the user-experienced audio playout, but no information about the usage of the rendering thread. This is intended to measure user experience across the population, and can also be used to react to when glitches occur, in which case the application can reduce complexity of audio computations or prompt the user to take some action, such as closing unused applications.
+
+### Security risks
+
+The RenderCapacity API gives information about the usage of the rendering thread even when there are no audio glitches, while the Playout Statistics API never gives any direct information about the rendering thread. Both APIs report audio glitches, the presence of which could mean that the rendering thread is overloaded but could also have a number of other explanations, as described in [the Side-channeling section of the Security and Privacy self review](https://docs.google.com/document/d/1wGv_mr7Lgg2w-6PuKDrcScoa8IvYAOW3PMTFW85O3Gw/edit#heading=h.14monskf6i0b). This means that the RenderCapacity API gives more information about CPU usage than the Playout Statistics API. Therefore we believe that the Playout Statistics API is safer than the RenderCapacity API.
 
 ## Considered alternatives
 
