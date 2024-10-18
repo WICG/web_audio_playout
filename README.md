@@ -13,20 +13,31 @@ This is the repository for Playout Statistics API for WebAudio. You're welcome t
 
 ## Introduction
 
-test commit please ignore
-
-There is currently no way to detect whether WebAudio playout has glitches (gaps in the played audio, which typically happens due to underperformance in the audio pipeline). There is an existing way to measure the instantaneous playout latency using [AudioContext.outputLatency](https://developer.mozilla.org/en-US/docs/Web/API/AudioContext/outputLatency), but no simple way to measure average/minimum/maximum latency over time. With this API, we want to propose a way to be able to measure the delay of that audio and the glitchiness of the audio.
+There is currently no direct way to detect whether WebAudio playout has glitches (gaps in the played audio, which typically happens due to underperformance in the audio pipeline). There is also no simple way to measure the average playout latency. With this API, we want to propose a way to measure glitchiness and average latency of audio played through WebAudio.
 
 
 ## Motivating Use Cases
 
-Glitches and high latency are bad for the user experience, so if any of these occur it can be useful for the application to be able to detect this and possibly take some action to improve the playout.
+Audio glitches sound like a small "pop" and are bad for the user experience. If playout latency is high, it may make the application feel unresponsive and cause the audio to appear out of sync with other parts of the application.
 
-With the API, we want to be able to calculate the following things:
+To counter these problems, web applications should be able to measure these and take some action to improve the audio playout, if possible. For example, this API would enable developers and applications to:
+- Reduce computational complexity in the application when glitches are detected, to reduce glitches.
+- Suggest that the user switch to a different audio configuration if latency is high.
+- Measure the impact of application features on audio glitches and latency.
 
-- The fraction of audio that was made up from fallback frames (which in chromium is silence) due to audio glitches over a certain time interval
-- The number of audio glitches over a certain time interval
-- The average audio playout delay over a certain time interval, and the interval that the delay moves in
+### What is currently possible
+The output latency of an AudioContext can be obtained from the [AudioContext.outputLatency](https://developer.mozilla.org/en-US/docs/Web/API/AudioContext/outputLatency) property. This value is instantaneous, and can shift quickly between subsequent calls due to browser internal processes like rebuffering. If we want an average latency over a period of time, which is more stable, the property has to be polled continuously, which is not ergonomic.
+
+Glitches originating through WebAudio playout are not directly measurable. It is possible to detect whether glitches have likely occurred by playing audio through a graph with a [ScriptProcessorNode](https://developer.mozilla.org/en-US/docs/Web/API/ScriptProcessorNode) or [AudioWorkletProcessor](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor) that measures the time between audio callbacks. If the time between the callbacks is greater than the duration of the audio that the callbacks provide, it could be because a glitch has occurred. 
+
+Because time can only be measured with limited precision, this method may fail to detect small glitches that may only last for a fraction of a millisecond yet are still audible to a human. This method will also have a hard time distinguishing between glitches and timing irregularities caused by other processes such as resampling. This method will also not be able to detect glitches that do not manifest as delayed audio callbacks, which may happen depending on audio device implementation.
+
+### What this API enables
+With this API, we will be able to calculate the following things:
+- The fraction of played audio that was made up from silence due to audio glitches over a specific time interval
+- The number of audio glitches over a specific time interval
+- The average audio playout delay over a specific time interval, and the interval that the delay moves in
+
 
 ## Proposed Solution
 
@@ -64,7 +75,7 @@ undefined resetLatency();
 ## Key scenarios
 
 This is an example of how the API can be used to calculate the following stats over a time interval:
-- Fraction of fallback frames
+- Fraction of fallback frames (silence due to glitches)
 - Frequency of fallback frames events (glitches)
 - Average playout delay
 
@@ -88,6 +99,13 @@ let fallbackFramesFraction = deltaFallbackFramesDuration / deltaTotalFramesDurat
 let fallbackEventFrequency = deltaFallbackFramesEvents / deltaTotalFramesDuration;
 // Average playout delay stat during the last deltaTotalFramesDuration seconds
 let playoutDelay = audioContext.playoutStats.averageLatency / 1000;
+
+if (fallbackFramesFrequency > 0) {
+    // Do something to prevent glitches, like lowering CPU usage
+}
+if (playoutDelay > 0.2) {
+    // Do something to reduce latency, like suggesting alternative playout methods
+}
 ```
 
 ## Detailed design discussion
