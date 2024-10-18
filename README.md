@@ -13,6 +13,8 @@ This is the repository for Playout Statistics API for WebAudio. You're welcome t
 
 ## Introduction
 
+test commit please ignore
+
 There is currently no way to detect whether WebAudio playout has glitches (gaps in the played audio, which typically happens due to underperformance in the audio pipeline). There is an existing way to measure the instantaneous playout latency using [AudioContext.outputLatency](https://developer.mozilla.org/en-US/docs/Web/API/AudioContext/outputLatency), but no simple way to measure average/minimum/maximum latency over time. With this API, we want to propose a way to be able to measure the delay of that audio and the glitchiness of the audio.
 
 
