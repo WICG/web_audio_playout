@@ -192,6 +192,49 @@ let playoutDelay = audioContext.playoutStats.averageLatency / 1000;
 
       </pre>
   </section>
+  <section>
+    <h2>Security & Privacy considerations</h2>
+    <h3>Covert channel</h3>
+    <p>
+      See <a
+      href="https://github.com/WICG/web_audio_playout/issues/4">discussion with Privacy WG</a>.
+    </p>
+    <p>
+      The glitch information provided by the API could be used to form a cross-site covert channel between two cooperating webstites. One site could transmit information by intentionally causing audio glitches (by causing very high CPU usage, for example) while the other site could use the API to detect these glitches.
+    </p>
+    <h3>Mitigations</h3>
+    <p>To inihibit the usage of this covert channel, implementers should apply these mitigations.</p>
+    <h4>Rate-limiting</h4>
+    <p>
+      Implementers should not update the values returned by the API more often than once per second. This limits the bandwidth of the covert channel.
+    </p>
+    <h4>Restricting API access</h4>
+    <p>
+      Implementers should only provide access to the API to sites that fulfill <i>at least one</i> of the following criteria:
+      <ol>
+        <li>
+          <b>The site has obtained <a href="https://w3c.github.io/mediacapture-main/#dom-mediadevices-getusermedia">getUserMedia</a> permission.</b>
+          <p>The reasoning is that if a site has obtained <a href="https://w3c.github.io/mediacapture-main/#dom-mediadevices-getusermedia">getUserMedia</a> permission, it can receive glitch information more efficiently through use of the microphone. These methods include:
+            <ul>
+              <li>
+                One site can transmit a message by playing ultrasound (inaudible to humans) through the speaker, and the site with the <a href="https://w3c.github.io/mediacapture-main/#dom-mediadevices-getusermedia">getUserMedia</a> permission can listen to it through the microphone.
+              </li>
+              <li>
+                The site can play a sine-wave at a frequency inaudible to humans, and listen to it through the microphone. By checking for gaps in the recorded signal, glitches can be detected much more reliably than what is possible using the API.
+              </li>
+            </ul>
+            Therefore, restricting the use of the API is no longer useful for mitigating the covert channel.
+          </p>
+        </li>
+        <li>
+          <b>The site is active/visible.</b>
+          <p>Assuming that neither cooperating site has microphone permission, this criteria ensures that the site that receives the covert signal must be visible, restricting the conditions under which the covert channel can be used. It makes it impossible for sites to communicate with each other using the covert channel while not visible.</p>
+        </li>
+      </ol>
+    </p>
+    <h4>Future mitigations</h4>
+    If microphone access becomes more secure in the future, the reasoning for allowing API access to sites with <a href="https://w3c.github.io/mediacapture-main/#dom-mediadevices-getusermedia">getUserMedia</a> permission may no longer apply. If this happens, the API access requirements should be reevaluated.
+  </section>
 </body>
 
 </html>
