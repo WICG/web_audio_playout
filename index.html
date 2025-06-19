@@ -30,6 +30,7 @@
       "shortName": "audio_context_playout_stats",
       "specStatus": "unofficial",
       "wg": "WICG",
+      "xref": ["geometry-1", "html", "infra", "permissions", "dom", "hr-time", "image-capture", "mediacapture-streams", "screen-capture", "webaudio", "webcodecs", "webidl"],
     };
   </script>
 </head>
@@ -69,7 +70,7 @@
           delay occurring in the playout path between the AudioContext and the output device.
     </p>
     <p>
-      Audio glitches are expressed in terms of fallback frames and fallback events.
+      Audio glitches are expressed in terms of fallback frames and fallback events. <br/>
       
       Fallback frames are frames played by the output device that were not provided
 by the playout path. This happens when the playout path fails to provide audio frames
@@ -89,9 +90,10 @@ frames are always silence. This includes underrun situations that happen for rea
       [SameObject] readonly attribute AudioPlayoutStats playoutStats;
     };
     </pre>
-    AudioContext has the following internal slots:
-    [[playout stats]] An instance of AudioPlayoutStats.
-
+    <p>
+    AudioContext has the following internal slot:
+    <dfn class=export data-dfn-for="AudioContext">[[\playout stats]]</dfn>, An instance of {{AudioContext/AudioPlayoutStats}}.
+    </p>
 
     <p>
     <section>
@@ -99,8 +101,11 @@ frames are always silence. This includes underrun situations that happen for rea
       <section>
         <h2><dfn>playoutStats</dfn> attribute</h2>
         <p>
-          If the [[playout stats]] slot is null, initialize the slot with the result of the *initialize playout stats* algorithm, with /this/ as input.
-          Return the value of the [[playout stats]] internal slot.
+          When accessing this attribute, run the following steps:
+          <ol>
+          <li>If the {{AudioContext/[[playout stats]]}} slot is null, initialize the slot with the result of the [= initialize playout stats =] algorithm, with <i>this</i> as input.</li>
+          <li>Return the value of the {{AudioContext/[[playout stats]]}} internal slot.</li>
+          </ol>
 
           When the AudioContext is in the "running" state, once per second, the *update playout stats* algorithm runs with /playout stats/ as input.
 
@@ -127,15 +132,24 @@ frames are always silence. This includes underrun situations that happen for rea
     </pre>
 
     It has the following internal slots:
-
-    [[fallback frames duration]]
-    [[fallback frames events]]
-    [[total frames duration]]
-    [[average latency]]
-    [[minimum latency]]
-    [[maximum latency]]
-    [[latency reset time]]
-    [[audio context]]
+    <dl>
+      <dt data-md><dfn class=export data-dfn-for="AudioPlayoutStats">[[\fallback frames duration]]</dfn></dt>
+      <dd data-md><p>A timestamp representing the total duration of fallback frames that the AudioContext has played as of the last stat update. Initialized to 0.</p></dd>
+      <dt data-md><dfn class=export data-dfn-for="AudioPlayoutStats">[[\fallback frames events]]</dfn></dt>
+      <dd data-md>And integer representing the total number of fallback events that have occurred as of the last stat update. Initialized to 0.</dd>
+      <dt data-md><dfn class=export data-dfn-for="AudioPlayoutStats">[[\total frames duration]]</dfn></dt>
+      <dd data-md>A timestamp representing the total duration of all audio frames that the AudioContext has played as of the last stat update. Initialized to 0.</dd>
+      <dt data-md><dfn class=export data-dfn-for="AudioPlayoutStats">[[\average latency]]</dfn></dt>
+      <dd data-md>A timestamp representing the average playout latency over the currently tracked interval.</dd>
+      <dt data-md><dfn class=export data-dfn-for="AudioPlayoutStats">[[\minimum latency]]</dfn></dt>
+      <dd data-md>A timestamp representing the minimum playout latency over the currently tracked interval.</dd>
+      <dt data-md><dfn class=export data-dfn-for="AudioPlayoutStats">[[\maximum latency]]</dfn></dt>
+      <dd data-md>A timestamp representing the maximum playout latency over the currently tracked interval.</dd>
+      <dt data-md><dfn class=export data-dfn-for="AudioPlayoutStats">[[\latency reset time]]</dfn></dt>
+      <dd data-md>A timestamp representing time that the latency statistics time was created on.</dd>
+      <dt data-md><dfn class=export data-dfn-for="AudioPlayoutStats"> [[\audio context]]</dfn></dt>
+      <dd data-md>The {{AudioContext}} owning the {{AudioPlayoutStats}} instance.</dd>
+    </dl>
 
     <section>
       <h2>Attributes</h2>
@@ -146,7 +160,7 @@ frames are always silence. This includes underrun situations that happen for rea
           used together with {{AudioPlayoutStats/totalFramesDuration}} to calculate the percentage of played out media
           that was not provided by the AudioContext.
 
-           Returns [[fallback frames duration]].
+           Returns {{AudioPlayoutStats/[[fallback frames duration]]}}.
         </p>
       </section>
       <section>
@@ -158,7 +172,7 @@ frames are always silence. This includes underrun situations that happen for rea
           single fallback
           frames event.
 
-          Returns [[fallback frames events]].
+          Returns {{AudioPlayoutStats/[[fallback frames events]]}}.
         </p>
       </section>
       <section>
@@ -218,16 +232,20 @@ frames are always silence. This includes underrun situations that happen for rea
     </section>
 
 
+    <section>
 
-    
-    The *initialize playout stats* algorithm means running these steps:
-    1. Let /owning audio context/ be the AudioContext passed into this algorithm
-    2. Let /playout stats/ be a new instance of AudioPlayoutStats
-    3. Set [[audio context]] in /playout stats/ to /owning audio context/
-    4. Set [[latency reset time]] in /playout stats/ to the current time.
-    5. Return /playout stats/
+    <p>
+    The <dfn>initialize playout stats</dfn> algorithm means running these steps:
+    <ol>
+    <li>Let /owning audio context/ be the AudioContext passed into this algorithm</li>
+    <li>Let /playout stats/ be a new instance of AudioPlayoutStats</li>
+    <li>Set [[audio context]] in /playout stats/ to /owning audio context/</li>
+    <li>Set [[latency reset time]] in /playout stats/ to the current time.</li>
+    <li>Return /playout stats/</li>
+    </ol>
+    </p>
 
-
+<p>
     The *update playout stats* algorithm means running these steps:
     1. If [[audio context]] is not running, abort these steps
     2. Let /document/ be the current objects associated document
@@ -242,8 +260,9 @@ frames are always silence. This includes underrun situations that happen for rea
     10. Set [[average latency]] to the average playout latency (in milliseconds) for frames played by [[audio context]] since [[latency reset time]].
     11. Set [[minimum latency]] to the minimum playout latency (in milliseconds) for frames played by [[audio context]] since [[latency reset time]].
     12. Set [[maximum latency]] to the maximum playout latency (in milliseconds) for frames played by [[audio context]] since [[latency reset time]].
+</p>
 
-
+    </section>
   </section>
 
   <section id="usage">
