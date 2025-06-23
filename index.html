@@ -63,11 +63,11 @@
     </p>
     <p>
 
-          The {{AudioContext/AudioPlayoutStats}} under AudioContext is a dedicated object for statistics reporting;
+          The {{AudioContext/AudioPlayoutStats}} under {{AudioContext}} is a dedicated object for statistics reporting;
           Similar to <a href="https://w3c.github.io/webrtc-stats/#dom-rtcaudioplayoutstats">RTCAudioPlayoutStats</a>,
-           but it is for the playout path via AudioDestinationNode and the associated output device.
-          This will allow us to measure glitches occurring due to underperforming AudioWorklets as well as glitches and
-          delay occurring in the playout path between the AudioContext and the output device.
+           but it is for the playout path via {{AudioDestinationNode}} and the associated output device.
+          This will allow us to measure glitches occurring due to underperforming {{AudioWorklet}}s as well as glitches and
+          delay occurring in the playout path between the {{AudioContext}} and the output device.
     </p>
     <p>
       Audio glitches are expressed in terms of fallback frames and fallback events.
@@ -75,7 +75,7 @@
       <li>A <dfn>fallback frame</dfn> is an audio frame played by the output device that was not provided
 by the playout path. This happens when the playout path fails to provide audio frames
 to the output device on time, in which case fallback frames will be played (fallback frames are typically silence). This typically
-only happens if the pipeline is underperforming. This includes underrun situations that happen for reasons unrelated to WebAudio/AudioWorklets.</li>
+only happens if the pipeline is underperforming. This includes underrun situations that happen for reasons unrelated to WebAudio/{{AudioWorklet}}s.</li>
     
   <li>A <dfn>fallback event</dfn> is a continuous interval of fallback frames being played. When a fallback frame is played after a non-fallback frame, we consider this a fallback event.</li>
   </ul>
@@ -91,7 +91,7 @@ only happens if the pipeline is underperforming. This includes underrun situatio
     };
     </pre>
     <p>
-    AudioContext has the following internal slot:
+    {{AudioContext}} has the following internal slot:
     <dfn class=export data-dfn-for="AudioContext">[[\playout stats]]</dfn>, An instance of {{AudioContext/AudioPlayoutStats}}, initially null.
     </p>
 
@@ -107,7 +107,7 @@ only happens if the pipeline is underperforming. This includes underrun situatio
           <li>Return the value of the {{AudioContext/[[playout stats]]}} internal slot.</li>
           </ol>
 
-          When the AudioContext is in the "running" state, once per second, the [= update playout stats =] algorithm runs on {{AudioContext/[[playout stats]]}}.
+          When the {{AudioContext}} is in the "running" state, once per second, the [= update playout stats =] algorithm runs on {{AudioContext/[[playout stats]]}}.
 
           </p>
       </section>
@@ -134,11 +134,11 @@ only happens if the pipeline is underperforming. This includes underrun situatio
     It has the following internal slots:
     <dl>
       <dt data-md><dfn class=export data-dfn-for="AudioPlayoutStats">[[\fallback frames duration]]</dfn></dt>
-      <dd data-md><p>A timestamp representing the total duration of fallback frames that the AudioContext has played as of the last stat update. Initialized to 0.</p></dd>
+      <dd data-md><p>A timestamp representing the total duration of fallback frames that the {{AudioContext}} has played as of the last stat update. Initialized to 0.</p></dd>
       <dt data-md><dfn class=export data-dfn-for="AudioPlayoutStats">[[\fallback frames events]]</dfn></dt>
       <dd data-md>And integer representing the total number of fallback events that have occurred as of the last stat update. Initialized to 0.</dd>
       <dt data-md><dfn class=export data-dfn-for="AudioPlayoutStats">[[\total frames duration]]</dfn></dt>
-      <dd data-md>A timestamp representing the total duration of all audio frames that the AudioContext has played as of the last stat update. Initialized to 0.</dd>
+      <dd data-md>A timestamp representing the total duration of all audio frames that the {{AudioContext}} has played as of the last stat update. Initialized to 0.</dd>
       <dt data-md><dfn class=export data-dfn-for="AudioPlayoutStats">[[\average latency]]</dfn></dt>
       <dd data-md>A timestamp representing the average playout latency over the currently tracked interval.</dd>
       <dt data-md><dfn class=export data-dfn-for="AudioPlayoutStats">[[\minimum latency]]</dfn></dt>
@@ -161,7 +161,7 @@ only happens if the pipeline is underperforming. This includes underrun situatio
         <p>Returns {{AudioPlayoutStats/[[fallback frames duration]]}}.</p>
         <p>Measures the duration of [=fallback frame=]s played by the {{AudioContext}}, in milliseconds. This metric can be
           used together with {{AudioPlayoutStats/totalFramesDuration}} to calculate the percentage of played out media
-          that was not provided by the AudioContext.
+          that was not provided by the {{AudioContext}}.
         </p>
       </section>
       <section>
@@ -181,7 +181,7 @@ only happens if the pipeline is underperforming. This includes underrun situatio
         <h2><dfn>averageLatency</dfn> attribute</h2>
         <p>Returns {{AudioPlayoutStats/[[average latency]]}}.</p>
         <p>This is the average latency for the frames played since the
-          last call to {{AudioPlayoutStats/resetLatency()}}, or since the creation of the AudioContext if
+          last call to {{AudioPlayoutStats/resetLatency()}}, or since the creation of the {{AudioContext}} if
           {{AudioPlayoutStats/resetLatency()}} has
           not been called.
         </p>
@@ -190,7 +190,7 @@ only happens if the pipeline is underperforming. This includes underrun situatio
         <h2><dfn>minimumLatency</dfn> attribute</h2>
         <p>Returns {{AudioPlayoutStats/[[minimum latency]]}}.</p>
         <p>This measures the minimum latency for the frames played since the
-          last call to {{AudioPlayoutStats/resetLatency()}}, or since the creation of the AudioContext if
+          last call to {{AudioPlayoutStats/resetLatency()}}, or since the creation of the {{AudioContext}} if
           {{AudioPlayoutStats/resetLatency()}} has not been called. 
         </p>
       </section>
@@ -198,7 +198,7 @@ only happens if the pipeline is underperforming. This includes underrun situatio
         <h2><dfn>maximumLatency</dfn> attribute</h2>
         <p>Returns {{AudioPlayoutStats/[[maximum latency]]}}.</p>
         <p>This measures the maximum latency for the frames played since the
-          last call to {{AudioPlayoutStats/resetLatency()}}, or since the creation of the AudioContext if
+          last call to {{AudioPlayoutStats/resetLatency()}}, or since the creation of the {{AudioContext}} if
           {{AudioPlayoutStats/resetLatency()}} has not been called.
         </p>
       </section>
@@ -230,7 +230,7 @@ only happens if the pipeline is underperforming. This includes underrun situatio
     <p>
     The <dfn>initialize playout stats</dfn> algorithm means running these steps:
     <ol>
-      <li>Let <var>owning audio context</var> be the AudioContext passed into this algorithm.</li>
+      <li>Let <var>owning audio context</var> be the {{AudioContext}} passed into this algorithm.</li>
       <li>Let <var>playout stats</var> be a new instance of AudioPlayoutStats.</li>
       <li>Set {{AudioPlayoutStats/[[audio context]]}} in <var>playout stats</var> to <var>owning audio context</var>.</li>
       <li>Set {{AudioPlayoutStats/[[latency reset time]]}} in <var>playout stats</var> to the current time.</li>

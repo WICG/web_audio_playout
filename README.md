@@ -129,7 +129,7 @@ A more detailed discussion about security and privacy can be found in the [Secur
 
 ### Cross-site covert channeling
 
-In Chromium, Safari and Firefox it is already possible to intentionally communicate between different origins using audio glitches ([see explanation here](https://github.com/w3ctag/design-reviews/issues/939#issuecomment-2022954199), or the concern by the Privacy WG raised [here](https://github.com/WICG/web_audio_playout/issues/4)). This side channel has a very high latency, is audible to the user, and degrades system performance. The introduction of the Playout Statistics API for WebAudio should not reduce the latency of this side channel, or make it more effective. For this reason, the API should implement two mitigations:
+With current browsers it is already possible to intentionally communicate between different origins using audio glitches ([see explanation here](https://github.com/w3ctag/design-reviews/issues/939#issuecomment-2022954199), or the concern by the Privacy WG raised [here](https://github.com/WICG/web_audio_playout/issues/4)). This side channel has a very high latency, is audible to the user, and degrades system performance. The introduction of the Playout Statistics API for WebAudio should not reduce the latency of this side channel, or make it more effective. For this reason, the API should implement two mitigations:
 
 * The values returned by the API should only update once per second (similar to the [Rate limitation used for the ComputePressure API](https://www.w3.org/TR/compute-pressure/#rate-limiting-change-notifications)).
 * The values returned by the API should only update if the site is visible or has `getUserMedia` permission.
