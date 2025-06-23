@@ -74,9 +74,8 @@
       <ul>
       <li>A <dfn>fallback frame</dfn> is an audio frame played by the output device that was not provided
 by the playout path. This happens when the playout path fails to provide audio frames
-to the output device on time, in which case fallback frames will be played. This typically
-only happens if the pipeline is underperforming. In the Chromium implementation, fallback
-frames are always silence. This includes underrun situations that happen for reasons unrelated to WebAudio/AudioWorklets.</li>
+to the output device on time, in which case fallback frames will be played (fallback frames are typically silence). This typically
+only happens if the pipeline is underperforming. This includes underrun situations that happen for reasons unrelated to WebAudio/AudioWorklets.</li>
     
   <li>A <dfn>fallback event</dfn> is a continuous interval of fallback frames being played. When a fallback frame is played after a non-fallback frame, we consider this a fallback event.</li>
   </ul>
@@ -154,6 +153,9 @@ frames are always silence. This includes underrun situations that happen for rea
 
     <section>
       <h2>Attributes</h2>
+      <div class="note">
+        <p>These attributes update only once per second and under specific conditions. See the <a href="#mitigations">Privacy & Security mitigations</a> section and the [= update playout stats =] algorithm for details.</p>
+      </div>
       <section>
         <h2><dfn>fallbackFramesDuration</dfn> attribute</h2>
         <p>Returns {{AudioPlayoutStats/[[fallback frames duration]]}}.</p>
@@ -172,7 +174,7 @@ frames are always silence. This includes underrun situations that happen for rea
       <section>
         <h2><dfn>totalFramesDuration</dfn> attribute</h2>
         <p>Returns {{AudioPlayoutStats/[[total frames duration]]}}.</p>
-        <p>>Measures the duration of all audio frames played by the {{AudioContext}}, in milliseconds. Includes both fallback and non-fallback frames.
+        <p>Measures the duration of all audio frames played by the {{AudioContext}}, in milliseconds. Includes both fallback and non-fallback frames.
         </p>
       </section>
       <section>
@@ -228,23 +230,23 @@ frames are always silence. This includes underrun situations that happen for rea
     <p>
     The <dfn>initialize playout stats</dfn> algorithm means running these steps:
     <ol>
-      <li>Let <var>owning audio context</var> be the AudioContext passed into this algorithm</li>
-      <li>Let <var>playout stats</var> be a new instance of AudioPlayoutStats</li>
-      <li>Set {{AudioPlayoutStats/[[audio context]]}} in <var>playout stats</var> to <var>owning audio context</var></li>
+      <li>Let <var>owning audio context</var> be the AudioContext passed into this algorithm.</li>
+      <li>Let <var>playout stats</var> be a new instance of AudioPlayoutStats.</li>
+      <li>Set {{AudioPlayoutStats/[[audio context]]}} in <var>playout stats</var> to <var>owning audio context</var>.</li>
       <li>Set {{AudioPlayoutStats/[[latency reset time]]}} in <var>playout stats</var> to the current time.</li>
-      <li>Return <var>playout stats</var></li>
+      <li>Return <var>playout stats</var>.</li>
     </ol>
     </p>
 
 <p>
   Running <dfn>update playout stats</dfn> algorithm on an {{AudioPlayoutStats}} means running these steps: 
     <ol>
-    <li>If {{AudioPlayoutStats/[[audio context]]}} is not running, abort these steps</li>
-    <li>Let <var>document</var> be the current objects associated document</li> 
-    <li>Let <var>can_update</var> be false</li> 
-    <li>If <var>document</var> is fully active, set <var>can_update</var> to true</li> 
+    <li>If {{AudioPlayoutStats/[[audio context]]}} is not running, abort these steps.</li>
+    <li>Let <var>document</var> be the current objects associated document.</li> 
+    <li>Let <var>can_update</var> be false.</li> 
+    <li>If <var>document</var> is fully active, set <var>can_update</var> to true.</li> 
     <li>Let <var>permission</var> be the [=permission state=] for the permission associated with microphone access. 
-    If <var>permission</var> is "granted", set <var>can_update</var> to true</li>
+    If <var>permission</var> is "granted", set <var>can_update</var> to true.</li>
     <li>If <var>can_update</var> is false, abort these steps.</li>
     <li>Set {{AudioPlayoutStats/[[fallback frames duration]]}} to the total duration of all fallback frames (in milliseconds) that {{AudioPlayoutStats/[[audio context]]}} has played since the creation of {{AudioPlayoutStats/[[audio context]]}}.</li> 
     <li>Set {{AudioPlayoutStats/[[fallback frames events]]}} to the number of times that {{AudioPlayoutStats/[[audio context]]}} has played a fallback frame after a non-fallback frame since the creation of {{AudioPlayoutStats/[[audio context]]}}.</li> 
@@ -306,7 +308,7 @@ let playoutDelay = audioContext.playoutStats.averageLatency / 1000;
     <p>
       The glitch information provided by the API could be used to form a cross-site covert channel between two cooperating webstites. One site could transmit information by intentionally causing audio glitches (by causing very high CPU usage, for example) while the other site could use the API to detect these glitches.
     </p>
-    <h3>Mitigations</h3>
+    <h3 id="mitigations">Mitigations</h3>
     <p>To inihibit the usage of this covert channel, implementers should apply these mitigations.</p>
     <h4>Rate-limiting</h4>
     <p>
