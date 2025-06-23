@@ -129,9 +129,12 @@ A more detailed discussion about security and privacy can be found in the [Secur
 
 ### Cross-site covert channeling
 
-In Chromium, Safari and Firefox it is already possible to intentionally communicate between different origins using audio glitches ([see explanation here](https://github.com/w3ctag/design-reviews/issues/939#issuecomment-2022954199)). This side channel has a very high latency, is audible to the user, and degrades system performance, so it is unlikely to be useful to attackers. 
+In Chromium, Safari and Firefox it is already possible to intentionally communicate between different origins using audio glitches ([see explanation here](https://github.com/w3ctag/design-reviews/issues/939#issuecomment-2022954199), or the concern by the Privacy WG raised [here](https://github.com/WICG/web_audio_playout/issues/4)). This side channel has a very high latency, is audible to the user, and degrades system performance. The introduction of the Playout Statistics API for WebAudio should not reduce the latency of this side channel, or make it more effective. For this reason, the API should implement two mitigations:
 
-It would be good if the introduction of the Playout Statistics API for WebAudio does not reduce the latency of this side channel. We could do this by limiting the rate at which the information provided by the API is updated, similar to the [Rate limitation used for the ComputePressure API](https://www.w3.org/TR/compute-pressure/#rate-limiting-change-notifications). This would increase the latency of any attempts to communicate using the glitch information, ensuring that the audio glitch-based side channel is not made more useful.
+* The values returned by the API should only update once per second (similar to the [Rate limitation used for the ComputePressure API](https://www.w3.org/TR/compute-pressure/#rate-limiting-change-notifications)).
+* The values returned by the API should only update if the site is visible or has `getUserMedia` permission.
+
+For more in-depth discussion about this concern and this mitigation, see [the spec](https://wicg.github.io/web_audio_playout/#security-privacy-considerations).
 
 ## Comparison to [WebAudio RenderCapacity API](https://github.com/w3ctag/design-reviews/issues/843)
 
