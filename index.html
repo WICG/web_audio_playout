@@ -211,14 +211,7 @@ only happens if the pipeline is underperforming. This includes underrun situatio
           latency information that has accrued but not yet been exposed through the API.
         </p>
         <p>
-          When <code>resetLatency()</code> is called, run these steps:
-          <ol>
-            <li>Let <var>current latency</var> be the playout latency of the last frame.</li>
-            <li>Set {{AudioPlayoutStats/[[latency reset time]]}} to the current time.</li>
-            <li>Set {{AudioPlayoutStats/[[average latency]]}} to <var>current latency</var>.</li>
-            <li>Set {{AudioPlayoutStats/[[minimum latency]]}} to <var>current latency</var>.</li>
-            <li>Set {{AudioPlayoutStats/[[maximum latency]]}} to <var>current latency</var>.</li>
-          </ol>
+          When <code>resetLatency()</code> is called, run the [= reset latency stats =] steps.
         </p>
       </section>
     </section>
@@ -228,26 +221,37 @@ only happens if the pipeline is underperforming. This includes underrun situatio
     <h2>Internal algorithms</h2>
 
     <p>
-    The <dfn>initialize playout stats</dfn> algorithm means running these steps:
+    Running the <dfn>initialize playout stats</dfn> algorithm means running these steps:
     <ol>
-      <li>Let <var>owning audio context</var> be the {{AudioContext}} passed into this algorithm.</li>
-      <li>Let <var>playout stats</var> be a new instance of AudioPlayoutStats.</li>
-      <li>Set {{AudioPlayoutStats/[[audio context]]}} in <var>playout stats</var> to <var>owning audio context</var>.</li>
-      <li>Set {{AudioPlayoutStats/[[latency reset time]]}} in <var>playout stats</var> to the current time.</li>
-      <li>Return <var>playout stats</var>.</li>
+      <li>Let <var>owningAudioContext</var> be the {{AudioContext}} passed into this algorithm.</li>
+      <li>Let <var>playoutStats</var> be a new instance of {{AudioPlayoutStats}}.</li>
+      <li>Set {{AudioPlayoutStats/[[audio context]]}} in <var>playoutStats</var> to <var>owningAudioContext</var>.</li>
+      <li>Run the [= reset latency stats =] steps.</li>
+      <li>Return <var>playoutStats</var>.</li>
     </ol>
-    </p>
+  </p>
 
 <p>
-  Running <dfn>update playout stats</dfn> algorithm on an {{AudioPlayoutStats}} means running these steps: 
+  Running the <dfn>reset latency stats</dfn> algorithm on an {{AudioPlayoutStats}} means running these steps: 
+  <ol>
+      <li>Let <var>currentLatency</var> be the playout latency of the last frame played by {{AudioPlayoutStats/[[audio context]]}}, or 0 if no frames have been played out yet.</li>
+      <li>Set {{AudioPlayoutStats/[[latency reset time]]}} to the current time.</li>
+      <li>Set {{AudioPlayoutStats/[[average latency]]}} to <var>currentLatency</var>.</li>
+      <li>Set {{AudioPlayoutStats/[[minimum latency]]}} to <var>currentLatency</var>.</li>
+      <li>Set {{AudioPlayoutStats/[[maximum latency]]}} to <var>currentLatency</var>.</li>
+    </ol>
+</p>
+
+<p>
+  Running the <dfn>update playout stats</dfn> algorithm on an {{AudioPlayoutStats}} means running these steps: 
     <ol>
     <li>If {{AudioPlayoutStats/[[audio context]]}} is not running, abort these steps.</li>
-    <li>Let <var>document</var> be the current objects associated document.</li> 
-    <li>Let <var>can_update</var> be false.</li> 
-    <li>If <var>document</var> is fully active, set <var>can_update</var> to true.</li> 
+    <li>Let <var>document</var> be the current object's <a href="https://html.spec.whatwg.org/multipage/nav-history-apis.html#concept-document-window">associated document</a>.</li> 
+    <li>Let <var>canUpdate</var> be false.</li> 
+    <li>If <var>document</var> is <a href="https://html.spec.whatwg.org/multipage/document-sequences.html#fully-active">fully active</a> and <a href="https://html.spec.whatwg.org/multipage/interaction.html#page-visibility">visible</a>, set <var>canUpdate</var> to true.</li>
     <li>Let <var>permission</var> be the [=permission state=] for the permission associated with microphone access. 
-    If <var>permission</var> is "granted", set <var>can_update</var> to true.</li>
-    <li>If <var>can_update</var> is false, abort these steps.</li>
+    If <var>permission</var> is "granted", set <var>canUpdate</var> to true.</li>
+    <li>If <var>canUpdate</var> is false, abort these steps.</li>
     <li>Set {{AudioPlayoutStats/[[fallback frames duration]]}} to the total duration of all fallback frames (in milliseconds) that {{AudioPlayoutStats/[[audio context]]}} has played since the creation of {{AudioPlayoutStats/[[audio context]]}}.</li> 
     <li>Set {{AudioPlayoutStats/[[fallback frames events]]}} to the number of times that {{AudioPlayoutStats/[[audio context]]}} has played a fallback frame after a non-fallback frame since the creation of {{AudioPlayoutStats/[[audio context]]}}.</li> 
     <li>Set {{AudioPlayoutStats/[[total frames duration]]}} to the total duration of all frames (in milliseconds) that {{AudioPlayoutStats/[[audio context]]}} has played since the creation of {{AudioPlayoutStats/[[audio context]]}}.</li> 
