@@ -213,6 +213,10 @@ only happens if the pipeline is underperforming. This includes underrun situatio
         <p>
           When <code>resetLatency()</code> is called, run the [= reset latency stats =] steps.
         </p>
+        <div class="note">
+          <p>Calling <code>resetLatency()</code> and reading any of the latency attributes immediately after will yield the same value as <a
+        href="https://webaudio.github.io/web-audio-api/#dom-audiocontext-outputlatency"><code>AudioContext.outputLatency</code></a>.</p>
+        </div>
       </section>
     </section>
 
@@ -249,7 +253,7 @@ only happens if the pipeline is underperforming. This includes underrun situatio
     <li>Let <var>document</var> be the current object's <a href="https://html.spec.whatwg.org/multipage/nav-history-apis.html#concept-document-window">associated document</a>.</li> 
     <li>Let <var>canUpdate</var> be false.</li> 
     <li>If <var>document</var> is <a href="https://html.spec.whatwg.org/multipage/document-sequences.html#fully-active">fully active</a> and <a href="https://html.spec.whatwg.org/multipage/interaction.html#page-visibility">visible</a>, set <var>canUpdate</var> to true.</li>
-    <li>Let <var>permission</var> be the [=permission state=] for the permission associated with microphone access. 
+    <li>Let <var>permission</var> be the [=permission state=] for the permission associated with [="microphone"=] access. 
     If <var>permission</var> is "granted", set <var>canUpdate</var> to true.</li>
     <li>If <var>canUpdate</var> is false, abort these steps.</li>
     <li>Set {{AudioPlayoutStats/[[fallback frames duration]]}} to the total duration of all fallback frames (in milliseconds) that {{AudioPlayoutStats/[[audio context]]}} has played since the creation of {{AudioPlayoutStats/[[audio context]]}}.</li> 
