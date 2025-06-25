@@ -30,6 +30,7 @@
       "shortName": "audio_context_playout_stats",
       "specStatus": "unofficial",
       "wg": "WICG",
+      "xref": ["geometry-1", "html", "infra", "permissions", "dom", "hr-time", "image-capture", "mediacapture-streams", "screen-capture", "webaudio", "webcodecs", "webidl"],
     };
   </script>
 </head>
@@ -60,6 +61,25 @@
       Glitches and high latency are bad for the user experience, so if any of these occur it can be useful for the
       application to be able to detect this and possibly take some action to improve the playout.
     </p>
+    <p>
+
+          The {{AudioContext/AudioPlayoutStats}} under {{AudioContext}} is a dedicated object for statistics reporting;
+          Similar to <a href="https://w3c.github.io/webrtc-stats/#dom-rtcaudioplayoutstats">RTCAudioPlayoutStats</a>,
+           but it is for the playout path via {{AudioDestinationNode}} and the associated output device.
+          This will allow us to measure glitches occurring due to underperforming {{AudioWorklet}}s as well as glitches and
+          delay occurring in the playout path between the {{AudioContext}} and the output device.
+    </p>
+    <p>
+      Audio glitches are expressed in terms of fallback frames and fallback events.
+      <ul>
+      <li>A <dfn>fallback frame</dfn> is an audio frame played by the output device that was not provided
+by the playout path. This happens when the playout path fails to provide audio frames
+to the output device on time, in which case fallback frames will be played (fallback frames are typically silence). This typically
+only happens if the pipeline is underperforming. This includes underrun situations that happen for reasons unrelated to WebAudio/{{AudioWorklet}}s.</li>
+    
+  <li>When a fallback frame is played after a non-fallback frame, we consider this a <dfn>fallback event</dfn>. That is, multiple consecutive fallback frames will count as a single fallback event.</li>
+  </ul>
+</p>
   </section>
   <section data-dfn-for="AudioContext">
     <h2>Extension of the <a href="https://webaudio.github.io/web-audio-api/#AudioContext"><dfn>AudioContext</dfn></a>
@@ -71,19 +91,29 @@
     };
     </pre>
     <p>
+    {{AudioContext}} has the following internal slot:
+    <dfn class=export data-dfn-for="AudioContext">[[\playout stats]]</dfn>, An instance of {{AudioContext/AudioPlayoutStats}}, initially null.
+    </p>
+
+    <p>
     <section>
       <h2>Attributes</h2>
       <section>
         <h2><dfn>playoutStats</dfn> attribute</h2>
         <p>
-          The {{AudioContext/AudioPlayoutStats}} under AudioContext is a dedicated object for statistics reporting;
-          Similar to <a href="https://w3c.github.io/webrtc-stats/#dom-rtcaudioplayoutstats">RTCAudioPlayoutStats</a>,
-           but it is for the playout path via AudioDestinationNode and the associated output device.
-          This will allow us to measure glitches occurring due to underperforming AudioWorklets as well as glitches and
-          delay occurring in the playout path between the AudioContext and the output device.</p>
+          When accessing this attribute, run the following steps:
+          <ol>
+          <li>If the {{AudioContext/[[playout stats]]}} slot is null, initialize the slot with the result of the [= initialize playout stats =] algorithm, with <i>this</i> as input.</li>
+          <li>Return the value of the {{AudioContext/[[playout stats]]}} internal slot.</li>
+          </ol>
+
+          When the {{AudioContext}} is in the "running" state, once per second, the [= update playout stats =] algorithm runs on {{AudioContext/[[playout stats]]}}.
+
+          </p>
       </section>
     </section>
     </p>
+
   </section>
   <section data-dfn-for="AudioPlayoutStats">
     <h2><dfn>AudioPlayoutStats</dfn> interface</h2>
@@ -100,47 +130,75 @@
       [Default] object toJSON();
     };
     </pre>
+
+    It has the following internal slots:
+    <dl>
+      <dt data-md><dfn class=export data-dfn-for="AudioPlayoutStats">[[\fallback frames duration]]</dfn></dt>
+      <dd data-md><p>A timestamp representing the total duration of fallback frames that the {{AudioContext}} has played as of the last stat update. Initialized to 0.</p></dd>
+      <dt data-md><dfn class=export data-dfn-for="AudioPlayoutStats">[[\fallback frames events]]</dfn></dt>
+      <dd data-md>And integer representing the total number of fallback events that have occurred as of the last stat update. Initialized to 0.</dd>
+      <dt data-md><dfn class=export data-dfn-for="AudioPlayoutStats">[[\total frames duration]]</dfn></dt>
+      <dd data-md>A timestamp representing the total duration of all audio frames that the {{AudioContext}} has played as of the last stat update. Initialized to 0.</dd>
+      <dt data-md><dfn class=export data-dfn-for="AudioPlayoutStats">[[\average latency]]</dfn></dt>
+      <dd data-md>A timestamp representing the average playout latency over the currently tracked interval.</dd>
+      <dt data-md><dfn class=export data-dfn-for="AudioPlayoutStats">[[\minimum latency]]</dfn></dt>
+      <dd data-md>A timestamp representing the minimum playout latency over the currently tracked interval.</dd>
+      <dt data-md><dfn class=export data-dfn-for="AudioPlayoutStats">[[\maximum latency]]</dfn></dt>
+      <dd data-md>A timestamp representing the maximum playout latency over the currently tracked interval.</dd>
+      <dt data-md><dfn class=export data-dfn-for="AudioPlayoutStats">[[\latency reset time]]</dfn></dt>
+      <dd data-md>A timestamp representing time that the latency statistics time was created on.</dd>
+      <dt data-md><dfn class=export data-dfn-for="AudioPlayoutStats"> [[\audio context]]</dfn></dt>
+      <dd data-md>The {{AudioContext}} owning the {{AudioPlayoutStats}} instance.</dd>
+    </dl>
+
     <section>
       <h2>Attributes</h2>
+      <div class="note">
+        <p>These attributes update only once per second and under specific conditions. See the <a href="#mitigations">Privacy & Security mitigations</a> section and the [= update playout stats =] algorithm for details.</p>
+      </div>
       <section>
         <h2><dfn>fallbackFramesDuration</dfn> attribute</h2>
-        <p>This value is measured in milliseconds and is incremented
-          each time a fallback frame is played by the output device at the end of the playout path. This metric can be
+        <p>Returns {{AudioPlayoutStats/[[fallback frames duration]]}}.</p>
+        <p>Measures the duration of [=fallback frame=]s played by the {{AudioContext}}, in milliseconds. This metric can be
           used together with {{AudioPlayoutStats/totalFramesDuration}} to calculate the percentage of played out media
-          that was not provided by the AudioContext.
+          that was not provided by the {{AudioContext}}.
         </p>
       </section>
       <section>
         <h2><dfn>fallbackFramesEvents</dfn> attribute</h2>
-        <p>This measures the number of synthesized fallback frames events.
-          This counter increases every time a fallback frame is played after a non-fallback frame. That is, multiple
-          consecutive fallback frames will increase {{AudioPlayoutStats/fallbackFramesDuration}} multiple times but is a
-          single fallback
-          frames event.
+        <p>Returns {{AudioPlayoutStats/[[fallback frames events]]}}.</p>
+        <p>
+          This measures the number of [=fallback event=]s that have occurred in the {{AudioContext}}.
         </p>
       </section>
       <section>
         <h2><dfn>totalFramesDuration</dfn> attribute</h2>
-        <p>This attribute is the total duration, in milliseconds, of all audio
-          frames that have been played by the audio device. Includes both fallback and non-fallback frames.</p>
+        <p>Returns {{AudioPlayoutStats/[[total frames duration]]}}.</p>
+        <p>Measures the duration of all audio frames played by the {{AudioContext}}, in milliseconds. Includes both fallback and non-fallback frames.
+        </p>
       </section>
       <section>
         <h2><dfn>averageLatency</dfn> attribute</h2>
+        <p>Returns {{AudioPlayoutStats/[[average latency]]}}.</p>
         <p>This is the average latency for the frames played since the
-          last call to {{AudioPlayoutStats/resetLatency()}}, or since the creation of the AudioContext if
+          last call to {{AudioPlayoutStats/resetLatency()}}, or since the creation of the {{AudioContext}} if
           {{AudioPlayoutStats/resetLatency()}} has
-          not been called.</p>
+          not been called.
+        </p>
       </section>
       <section>
         <h2><dfn>minimumLatency</dfn> attribute</h2>
+        <p>Returns {{AudioPlayoutStats/[[minimum latency]]}}.</p>
         <p>This measures the minimum latency for the frames played since the
-          last call to {{AudioPlayoutStats/resetLatency()}}, or since the creation of the AudioContext if
-          {{AudioPlayoutStats/resetLatency()}} has not been called. </p>
+          last call to {{AudioPlayoutStats/resetLatency()}}, or since the creation of the {{AudioContext}} if
+          {{AudioPlayoutStats/resetLatency()}} has not been called. 
+        </p>
       </section>
       <section>
         <h2><dfn>maximumLatency</dfn> attribute</h2>
+        <p>Returns {{AudioPlayoutStats/[[maximum latency]]}}.</p>
         <p>This measures the maximum latency for the frames played since the
-          last call to {{AudioPlayoutStats/resetLatency()}}, or since the creation of the AudioContext if
+          last call to {{AudioPlayoutStats/resetLatency()}}, or since the creation of the {{AudioContext}} if
           {{AudioPlayoutStats/resetLatency()}} has not been called.
         </p>
       </section>
@@ -150,10 +208,62 @@
       <section>
         <h2><dfn>resetLatency</dfn> method</h2>
         <p>This method resets the latency counters. Note that it does not remove
-          latency information that has accrued but not yet been exposed through the API.</p>
+          latency information that has accrued but not yet been exposed through the API.
+        </p>
+        <p>
+          When <code>resetLatency()</code> is called, run the [= reset latency stats =] steps.
+        </p>
       </section>
     </section>
+
+
+    <section>
+    <h2>Internal algorithms</h2>
+
+    <p>
+    Running the <dfn>initialize playout stats</dfn> algorithm means running these steps:
+    <ol>
+      <li>Let <var>owningAudioContext</var> be the {{AudioContext}} passed into this algorithm.</li>
+      <li>Let <var>playoutStats</var> be a new instance of {{AudioPlayoutStats}}.</li>
+      <li>Set {{AudioPlayoutStats/[[audio context]]}} in <var>playoutStats</var> to <var>owningAudioContext</var>.</li>
+      <li>Run the [= reset latency stats =] steps.</li>
+      <li>Return <var>playoutStats</var>.</li>
+    </ol>
+  </p>
+
+<p>
+  Running the <dfn>reset latency stats</dfn> algorithm on an {{AudioPlayoutStats}} means running these steps: 
+  <ol>
+      <li>Let <var>currentLatency</var> be the playout latency of the last frame played by {{AudioPlayoutStats/[[audio context]]}}, or 0 if no frames have been played out yet.</li>
+      <li>Set {{AudioPlayoutStats/[[latency reset time]]}} to the <a href="https://www.w3.org/TR/compute-pressure/#ref-for-dfn-timestamp-1">current time</a>.</li>
+      <li>Set {{AudioPlayoutStats/[[average latency]]}} to <var>currentLatency</var>.</li>
+      <li>Set {{AudioPlayoutStats/[[minimum latency]]}} to <var>currentLatency</var>.</li>
+      <li>Set {{AudioPlayoutStats/[[maximum latency]]}} to <var>currentLatency</var>.</li>
+    </ol>
+</p>
+
+<p>
+  Running the <dfn>update playout stats</dfn> algorithm on an {{AudioPlayoutStats}} means running these steps: 
+    <ol>
+    <li>If {{AudioPlayoutStats/[[audio context]]}} is not running, abort these steps.</li>
+    <li>Let <var>document</var> be the current object's <a href="https://html.spec.whatwg.org/multipage/nav-history-apis.html#concept-document-window">associated document</a>.</li> 
+    <li>Let <var>canUpdate</var> be false.</li> 
+    <li>If <var>document</var> is <a href="https://html.spec.whatwg.org/multipage/document-sequences.html#fully-active">fully active</a> and <a href="https://html.spec.whatwg.org/multipage/interaction.html#page-visibility">visible</a>, set <var>canUpdate</var> to true.</li>
+    <li>Let <var>permission</var> be the [=permission state=] for the permission associated with [="microphone"=] access. 
+    If <var>permission</var> is "granted", set <var>canUpdate</var> to true.</li>
+    <li>If <var>canUpdate</var> is false, abort these steps.</li>
+    <li>Set {{AudioPlayoutStats/[[fallback frames duration]]}} to the total duration of all fallback frames (in milliseconds) that {{AudioPlayoutStats/[[audio context]]}} has played since the creation of {{AudioPlayoutStats/[[audio context]]}}.</li> 
+    <li>Set {{AudioPlayoutStats/[[fallback frames events]]}} to the number of times that {{AudioPlayoutStats/[[audio context]]}} has played a fallback frame after a non-fallback frame since the creation of {{AudioPlayoutStats/[[audio context]]}}.</li> 
+    <li>Set {{AudioPlayoutStats/[[total frames duration]]}} to the total duration of all frames (in milliseconds) that {{AudioPlayoutStats/[[audio context]]}} has played since the creation of {{AudioPlayoutStats/[[audio context]]}}.</li> 
+    <li>Set {{AudioPlayoutStats/[[average latency]]}} to the average playout latency (in milliseconds) for frames played by {{AudioPlayoutStats/[[audio context]]}} since {{AudioPlayoutStats/[[latency reset time]]}}.</li> 
+    <li>Set {{AudioPlayoutStats/[[minimum latency]]}} to the minimum playout latency (in milliseconds) for frames played by {{AudioPlayoutStats/[[audio context]]}} since {{AudioPlayoutStats/[[latency reset time]]}}.</li> 
+    <li>Set {{AudioPlayoutStats/[[maximum latency]]}} to the maximum playout latency (in milliseconds) for frames played by {{AudioPlayoutStats/[[audio context]]}} since {{AudioPlayoutStats/[[latency reset time]]}}.</li> 
+  </ol>
+</p>
+
+    </section>
   </section>
+
   <section id="usage">
     <h2>Usage Example</h2>
     This is an example of how the API can be used to calculate the following stats over a time interval:
@@ -202,7 +312,7 @@ let playoutDelay = audioContext.playoutStats.averageLatency / 1000;
     <p>
       The glitch information provided by the API could be used to form a cross-site covert channel between two cooperating webstites. One site could transmit information by intentionally causing audio glitches (by causing very high CPU usage, for example) while the other site could use the API to detect these glitches.
     </p>
-    <h3>Mitigations</h3>
+    <h3 id="mitigations">Mitigations</h3>
     <p>To inihibit the usage of this covert channel, implementers should apply these mitigations.</p>
     <h4>Rate-limiting</h4>
     <p>
