@@ -213,10 +213,6 @@ only happens if the pipeline is underperforming. This includes underrun situatio
         <p>
           When <code>resetLatency()</code> is called, run the [= reset latency stats =] steps.
         </p>
-        <div class="note">
-          <p>Calling <code>resetLatency()</code> and reading any of the latency attributes immediately after will yield a similar latency to <a
-        href="https://webaudio.github.io/web-audio-api/#dom-audiocontext-outputlatency"><code>AudioContext.outputLatency</code></a>.</p>
-        </div>
       </section>
     </section>
 
@@ -320,7 +316,7 @@ let playoutDelay = audioContext.playoutStats.averageLatency / 1000;
     <p>To inihibit the usage of this covert channel, implementers should apply these mitigations.</p>
     <h4>Rate-limiting</h4>
     <p>
-      Implementers should not update the values returned by the API more often than once per second. This limits the bandwidth of the covert channel.
+      Implementers should not update the glitch stats returned by the API more often than once per second. This limits the bandwidth of the covert channel.
     </p>
     <h4>Restricting API access</h4>
     <p>
